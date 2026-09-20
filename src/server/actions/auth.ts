@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { createSession, destroySession, getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
+import { checkRateLimit, clientIp, LOGIN_LIMIT, REGISTER_LIMIT } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/notifications";
 
 export type ActionState = { error?: string; success?: string } | null;
@@ -32,6 +33,11 @@ export async function registerAction(_prev: ActionState, formData: FormData): Pr
 
   const { name, email, password } = parsed.data;
   const role = "STUDENT" as const;
+
+  const rl = checkRateLimit(`register:${await clientIp()}`, REGISTER_LIMIT.limit, REGISTER_LIMIT.windowMs);
+  if (!rl.allowed) {
+    return { error: `محاولات كتيرة. حاول تاني بعد ${Math.ceil(rl.retryAfterSeconds / 60)} دقيقة` };
+  }
   const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
   if (existing.length) {
     return { error: "هذا البريد الإلكتروني مسجل بالفعل" };
@@ -63,6 +69,11 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
   }
 
   const { email, password } = parsed.data;
+  const rl = checkRateLimit(`login:${await clientIp()}`, LOGIN_LIMIT.limit, LOGIN_LIMIT.windowMs);
+  if (!rl.allowed) {
+    return { error: `محاولات كتيرة. حاول تاني بعد ${Math.ceil(rl.retryAfterSeconds / 60)} دقيقة` };
+  }
+
   const rows = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!rows.length) return { error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
 

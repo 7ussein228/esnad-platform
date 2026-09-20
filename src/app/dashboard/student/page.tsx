@@ -17,7 +17,7 @@ export default async function StudentOverviewPage() {
   const unread = await getUnreadNotificationCount(user.id);
 
   const myEnrollments = await db
-    .select({ courseId: courses.id, title: courses.title, gradeName: grades.name, subjectName: subjects.name })
+    .select({ courseId: courses.id, title: courses.title, slug: courses.slug, gradeName: grades.name, subjectName: subjects.name })
     .from(enrollments)
     .innerJoin(courses, eq(enrollments.courseId, courses.id))
     .innerJoin(grades, eq(courses.gradeId, grades.id))
@@ -66,7 +66,7 @@ export default async function StudentOverviewPage() {
         <div className="lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-bold text-ink-800"><BookOpen className="h-5 w-5 text-primary-600" /> أكمل التعلم</h2>
-            <Link href="/dashboard/student/courses" className="text-sm font-bold text-primary-700 hover:underline">كل الكورسات</Link>
+            <Link href="/explore" className="text-sm font-bold text-primary-700 hover:underline">استكشف كورسات</Link>
           </div>
           <div className="space-y-4">
             {coursesWithProgress.map((c) => (
@@ -79,7 +79,7 @@ export default async function StudentOverviewPage() {
                     </div>
                     <p className="font-bold text-ink-800">{c.title}</p>
                   </div>
-                  <Button href={`/dashboard/student/courses/${c.courseId}`} size="sm">متابعة</Button>
+                  <Button href={`/courses/${c.slug}`} size="sm">متابعة</Button>
                 </div>
                 <div className="mt-3">
                   <div className="mb-1 flex justify-between text-xs text-ink-500">

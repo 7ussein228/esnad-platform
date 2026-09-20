@@ -4,10 +4,13 @@ import { ShieldCheck } from "lucide-react";
 import { db } from "@/db";
 import { orders, payments, courses } from "@/db/schema";
 import { requireRole } from "@/lib/auth";
-import { getMockProvider } from "@/lib/payments";
+import { getMockProvider, isMockSimulationAllowed } from "@/lib/payments";
+import type { Metadata } from "next";
 import { Card, Badge } from "@/components/ui";
 import { formatCurrency } from "@/lib/utils";
 import { PayButton } from "@/components/pay-button";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +24,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
   if (order.studentId !== student.id) notFound();
 
   if (order.status === "PAID") {
-    redirect(`/dashboard/student/courses/${order.courseId}`);
+    redirect(`/dashboard/student`);
   }
 
   const paymentRows = await db.select().from(payments).where(eq(payments.orderId, order.id)).limit(1);
@@ -30,6 +33,20 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
 
   const courseRows = await db.select().from(courses).where(eq(courses.id, order.courseId)).limit(1);
   const course = courseRows[0];
+
+  // Production without a real payment provider: never simulate success.
+  if (!isMockSimulationAllowed()) {
+    return (
+      <div className="pattern-motif flex min-h-screen items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-lg p-8 text-center">
+          <h1 className="font-display text-2xl font-bold text-ink-900">الدفع غير متاح حاليًا</h1>
+          <p className="mt-2 text-sm text-ink-500">
+            بوابة الدفع الحقيقية لسه بتتجهز. تواصل مع المستر لتفعيل اشتراكك يدويًا.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   const provider = getMockProvider();
   const payload = JSON.stringify({
@@ -65,7 +82,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
         </div>
 
         <div className="mt-6">
-          <PayButton payload={payload} signature={signature} successRedirect={`/dashboard/student/courses/${order.courseId}`} />
+          <PayButton payload={payload} signature={signature} successRedirect={`/dashboard/student`} />
         </div>
 
         <p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink-400">

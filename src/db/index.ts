@@ -3,9 +3,9 @@ import { Pool } from "pg";
 
 const databaseUrl = process.env.DATABASE_URL;
 
-// Allow `next build` / `next lint` on Vercel without a DB at build time.
+// Allow `next build` / `next lint` without a DB at build time (Vercel or local).
 // Runtime pages are force-dynamic and will fail clearly if DB is unreachable.
-if (!databaseUrl && process.env.NODE_ENV === "production" && process.env.VERCEL !== "1") {
+if (!databaseUrl && process.env.NEXT_PHASE !== "phase-production-build" && process.env.VERCEL !== "1") {
   throw new Error("DATABASE_URL is required");
 }
 

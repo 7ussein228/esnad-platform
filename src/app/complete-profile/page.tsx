@@ -8,7 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isStudentProfileComplete } from "@/server/actions/firebase-auth";
 import { CompleteProfileForm } from "./complete-form";
 
-export const metadata: Metadata = { title: "استكمال البيانات" };
+export const metadata: Metadata = { title: "استكمال البيانات", robots: { index: false, follow: false } };
 
 export const dynamic = "force-dynamic";
 

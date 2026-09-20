@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { LoginForm } from "./login-form";
 
-export const metadata: Metadata = { title: "تسجيل الدخول" };
+export const metadata: Metadata = { title: "تسجيل الدخول", robots: { index: false, follow: false } };
 
 export default function LoginPage() {
   return (

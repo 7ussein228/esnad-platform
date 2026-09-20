@@ -24,7 +24,7 @@ export async function grantEnrollment(studentId: string, courseId: string, sourc
     .values({ studentId, courseId, source })
     .returning({ id: enrollments.id });
 
-  await notifyUser(studentId, "ENROLLMENT", "تم تفعيل اشتراكك", "يمكنك الآن بدء التعلم في الكورس", `/dashboard/student/courses/${courseId}`);
+  await notifyUser(studentId, "ENROLLMENT", "تم تفعيل اشتراكك", "يمكنك الآن بدء التعلم في الكورس", `/dashboard/student`);
   return created.id;
 }
 

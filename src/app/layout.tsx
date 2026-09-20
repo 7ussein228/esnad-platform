@@ -46,6 +46,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  // Set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION in Vercel env after adding
+  // the property in Google Search Console (HTML-tag method).
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
   robots: {
     index: true,
     follow: true,

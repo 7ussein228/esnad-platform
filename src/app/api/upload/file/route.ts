@@ -5,6 +5,8 @@ import { generateStorageKey, uploadBuffer } from "@/lib/storage";
 export const runtime = "nodejs";
 
 const ALLOWED_FOLDERS = new Set(["lesson-files", "thumbnails", "documents", "maps", "submissions", "attachments"]);
+// Content folders are teacher-only; students may only upload submissions/attachments.
+const TEACHER_ONLY_FOLDERS = new Set(["lesson-files", "thumbnails", "documents", "maps"]);
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +15,9 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file");
     const folderRaw = String(formData.get("folder") || "attachments");
     const folder = ALLOWED_FOLDERS.has(folderRaw) ? folderRaw : "attachments";
+    if (TEACHER_ONLY_FOLDERS.has(folder) && user.role !== "TEACHER" && user.role !== "ADMIN") {
+      return NextResponse.json({ error: "غير مصرح لك بالرفع في هذا القسم" }, { status: 403 });
+    }
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "لم يتم إرسال أي ملف" }, { status: 400 });
@@ -27,6 +32,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ...result, originalFileName: file.name, sizeBytes: file.size });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message || "فشل رفع الملف" }, { status: 500 });
+    // Never leak internal/DB error details to the client.
+    console.error("file upload failed:", error);
+    return NextResponse.json({ error: "فشل رفع الملف. حاول مرة أخرى" }, { status: 500 });
   }
 }

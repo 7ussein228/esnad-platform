@@ -77,3 +77,20 @@ export function getPaymentProvider(name: string = process.env.PAYMENT_PROVIDER |
 export function getMockProvider() {
   return providers.mock as MockProvider;
 }
+
+/**
+ * The mock provider simulates a bank UI + server-to-server callback so the
+ * full order -> checkout -> webhook -> enrollment flow can be exercised
+ * without banking credentials.
+ *
+ * PRODUCTION SAFETY: simulated success is NEVER available in production
+ * unless explicitly enabled with ALLOW_MOCK_PAYMENTS=true (staging/tests
+ * only). In real production a PaymentProvider implementation (Paymob/Fawry/
+ * Stripe) must be registered and PAYMENT_PROVIDER must point at it — otherwise
+ * checkout refuses to take money and no enrollment can be granted.
+ */
+export function isMockSimulationAllowed() {
+  if ((process.env.PAYMENT_PROVIDER || "mock") !== "mock") return false;
+  if (process.env.NODE_ENV !== "production") return true;
+  return process.env.ALLOW_MOCK_PAYMENTS === "true";
+}

@@ -5,7 +5,7 @@ import { grades } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { RegisterForm } from "./register-form";
 
-export const metadata: Metadata = { title: "إنشاء حساب جديد" };
+export const metadata: Metadata = { title: "إنشاء حساب جديد", robots: { index: false, follow: false } };
 
 export const dynamic = "force-dynamic";
 

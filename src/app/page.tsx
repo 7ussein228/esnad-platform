@@ -70,6 +70,65 @@ export default async function HomePage() {
   return (
     <div className="pattern-motif">
       <SiteHeader />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "EducationalOrganization",
+                name: "منصة إسناد",
+                description:
+                  "منصة تعليمية عربية متخصصة في الدراسات الاجتماعية والتاريخ والجغرافيا.",
+                url: process.env.NEXT_PUBLIC_APP_URL ?? undefined,
+              },
+              {
+                "@type": "WebSite",
+                name: "منصة إسناد",
+                inLanguage: "ar",
+              },
+              {
+                "@type": "FAQPage",
+                mainEntity: [
+                  {
+                    "@type": "Question",
+                    name: "هل يمكنني مشاهدة الدروس أكثر من مرة؟",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "نعم، بعد الاشتراك يمكنك مشاهدة الدروس في أي وقت وعدد مرات غير محدود.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "هل تعمل المنصة على الموبايل؟",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "المنصة متجاوبة بالكامل وتعمل على المتصفح من الموبايل والتابلت وأجهزة الكمبيوتر.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "كيف يتم الدفع مقابل الكورسات المدفوعة؟",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "عبر بوابة دفع آمنة، ويتم تفعيل اشتراكك تلقائيًا فور تأكيد عملية الدفع من الخادم.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    name: "ماذا لو فشلت في اختبار إلزامي لفتح الدرس التالي؟",
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: "يمكنك إعادة المحاولة حسب عدد المحاولات المسموح، أو تقديم طلب إعادة فتح للمستر.",
+                    },
+                  },
+                ],
+              },
+            ],
+          }),
+        }}
+      />
 
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-ink-200/60 bg-gradient-to-b from-papyrus-100 to-papyrus-50 px-4 py-20 sm:px-6 lg:py-28">
@@ -311,7 +370,7 @@ export default async function HomePage() {
               { name: "أحمد ماهر", grade: "الثانية بكالوريا", text: "المتابعة من الموبايل والكمبيوتر بيرجع بنفس المكان اللي وقفت عنده، حاجة ممتازة." },
             ].map((t) => (
               <Card key={t.name} className="p-6">
-                <p className="text-sm leading-relaxed text-ink-600">"{t.text}"</p>
+                <p className="text-sm leading-relaxed text-ink-600">&ldquo;{t.text}&rdquo;</p>
                 <p className="mt-4 font-bold text-ink-800">{t.name}</p>
                 <p className="text-xs text-ink-500">{t.grade}</p>
               </Card>

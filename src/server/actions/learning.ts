@@ -130,7 +130,7 @@ export async function createReopenRequestAction(_prev: ActionState, formData: Fo
       "REOPEN_REQUEST",
       "طلب إعادة فتح محتوى",
       `${student.name} يطلب إعادة فتح محتوى في كورس ${courseRows[0].title}`,
-      `/dashboard/teacher/reopen-requests`
+      `/dashboard/teacher`
     );
   }
 
@@ -163,7 +163,7 @@ export async function reviewReopenRequestAction(requestId: string, decision: "AP
     "REOPEN_REQUEST",
     decision === "APPROVED" ? "تمت الموافقة على طلبك" : "تم رفض طلبك",
     decision === "APPROVED" ? "تم فتح المحتوى المطلوب، يمكنك المتابعة الآن" : "لم تتم الموافقة على طلب إعادة الفتح",
-    `/dashboard/student/reopen-requests`
+    `/dashboard/student`
   );
 
   revalidatePath("/dashboard/teacher/reopen-requests");

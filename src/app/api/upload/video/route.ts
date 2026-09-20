@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
     if (!file.type.startsWith("video/")) {
       return NextResponse.json({ error: "الملف يجب أن يكون فيديو" }, { status: 400 });
     }
+    const MAX_VIDEO_BYTES = 1024 * 1024 * 1024; // 1GB
+    if (file.size > MAX_VIDEO_BYTES) {
+      return NextResponse.json({ error: "الحد الأقصى لحجم الفيديو هو 1 جيجابايت" }, { status: 400 });
+    }
 
     const ownershipRows = await db
       .select({ course: courses })
@@ -44,6 +48,8 @@ export async function POST(req: NextRequest) {
       sizeBytes: file.size,
     });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message || "فشل رفع الفيديو" }, { status: 500 });
+    // Never leak internal/DB error details to the client.
+    console.error("video upload failed:", error);
+    return NextResponse.json({ error: "فشل رفع الفيديو. حاول مرة أخرى" }, { status: 500 });
   }
 }

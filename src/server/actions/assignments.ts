@@ -96,7 +96,7 @@ export async function setAssignmentStatusAction(assignmentId: string, status: "D
       "NEW_ASSIGNMENT",
       "واجب جديد",
       rows[0].title,
-      `/dashboard/student/assignments/${assignmentId}`
+      `/dashboard/student`
     );
   }
   revalidatePath(`/dashboard/teacher/assignments/${assignmentId}`);
@@ -179,7 +179,7 @@ export async function gradeSubmissionAction(submissionId: string, _prev: ActionS
     "GRADE",
     "تم تصحيح الواجب",
     `${rows[0].assignment.title}: ${grade}/${rows[0].assignment.maxScore}`,
-    `/dashboard/student/assignments/${rows[0].assignment.id}`
+    `/dashboard/student`
   );
 
   revalidatePath(`/dashboard/teacher/assignments/${rows[0].assignment.id}`);

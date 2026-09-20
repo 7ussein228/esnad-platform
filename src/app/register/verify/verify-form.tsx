@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import { signInWithPhoneNumber, RecaptchaVerifier } from "firebase/auth";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase-client";
@@ -12,8 +12,15 @@ import { Button, Input, Label, Alert, Card } from "@/components/ui";
 // then create the STUDENT account via registerWithOtpAction.
 export function VerifyForm() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(registerWithOtpAction, null);
-  const [data, setData] = useState<PendingRegistration | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  // Pending registration staged by step 1 in sessionStorage (client-only).
+  const [data] = useState<PendingRegistration | null>(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_REGISTRATION_KEY);
+      return raw ? (JSON.parse(raw) as PendingRegistration) : null;
+    } catch {
+      return null;
+    }
+  });
   const [otp, setOtp] = useState("");
   const [confirmObj, setConfirmObj] = useState<unknown>(null);
   const [verified, setVerified] = useState<{ idToken: string; firebaseUid: string } | null>(null);
@@ -21,18 +28,6 @@ export function VerifyForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const recaptchaRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(PENDING_REGISTRATION_KEY);
-      if (raw) setData(JSON.parse(raw));
-    } catch {
-      setData(null);
-    }
-    setLoaded(true);
-  }, []);
-
-  if (!loaded) return <p className="text-sm text-ink-500">جارٍ التحميل...</p>;
 
   if (!data) {
     return (

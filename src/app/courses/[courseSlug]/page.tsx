@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { and, asc, eq } from "drizzle-orm";
 import { PlayCircle, FileText, Lock, Unlock, BookOpen } from "lucide-react";
 import { db } from "@/db";
@@ -12,6 +13,23 @@ import { formatCurrency } from "@/lib/utils";
 import { enrollInCourseAction } from "@/server/actions/commerce";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ courseSlug: string }> }): Promise<Metadata> {
+  const { courseSlug } = await params;
+  const rows = await db
+    .select({ title: courses.title, description: courses.description })
+    .from(courses)
+    .where(and(eq(courses.slug, courseSlug), eq(courses.status, "PUBLISHED")))
+    .limit(1);
+  if (!rows.length) return { title: "كورس غير موجود" };
+  const description = rows[0].description?.slice(0, 160) ?? `كورس ${rows[0].title} على منصة إسناد`;
+  return {
+    title: rows[0].title,
+    description,
+    alternates: { canonical: `/courses/${courseSlug}` },
+    openGraph: { title: rows[0].title, description, type: "website", locale: "ar_EG" },
+  };
+}
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseSlug: string }> }) {
   const { courseSlug } = await params;
@@ -39,14 +57,16 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
     .where(eq(courseModules.courseId, course.id))
     .orderBy(asc(courseModules.order));
 
+  // Only this course's published lessons (scoped join — never the whole table).
   const allLessons = await db
-    .select()
+    .select({ lesson: lessons })
     .from(lessons)
-    .where(eq(lessons.status, "PUBLISHED"))
+    .innerJoin(courseModules, eq(lessons.moduleId, courseModules.id))
+    .where(and(eq(courseModules.courseId, course.id), eq(lessons.status, "PUBLISHED")))
     .orderBy(asc(lessons.order));
 
-  const lessonsByModule = new Map<string, typeof allLessons>();
-  for (const l of allLessons) {
+  const lessonsByModule = new Map<string, (typeof lessons.$inferSelect)[]>();
+  for (const { lesson: l } of allLessons) {
     if (!lessonsByModule.has(l.moduleId)) lessonsByModule.set(l.moduleId, []);
     lessonsByModule.get(l.moduleId)!.push(l);
   }
@@ -58,6 +78,34 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   return (
     <div className="pattern-motif min-h-screen">
       <SiteHeader />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "Course",
+                name: course.title,
+                description: course.description ?? undefined,
+                provider: {
+                  "@type": "EducationalOrganization",
+                  name: "منصة إسناد",
+                  sameAs: process.env.NEXT_PUBLIC_APP_URL ?? undefined,
+                },
+              },
+              {
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  { "@type": "ListItem", position: 1, name: "الرئيسية", item: "/" },
+                  { "@type": "ListItem", position: 2, name: "استكشف الكورسات", item: "/explore" },
+                  { "@type": "ListItem", position: 3, name: course.title },
+                ],
+              },
+            ],
+          }),
+        }}
+      />
 
       <section className="border-b border-ink-200/60 bg-gradient-to-b from-primary-900 to-primary-700 px-4 py-14 text-white sm:px-6">
         <div className="mx-auto max-w-6xl">
@@ -133,7 +181,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
                 <p className="rounded-xl bg-papyrus-100 p-3 text-center text-sm text-ink-500">الاشتراك متاح لحسابات الطلاب فقط</p>
               )}
               {user && user.role === "STUDENT" && enrolled && (
-                <Button href={`/dashboard/student/courses/${course.id}`} className="w-full" size="lg">
+                <Button href={`/dashboard/student`} className="w-full" size="lg">
                   متابعة التعلم
                 </Button>
               )}

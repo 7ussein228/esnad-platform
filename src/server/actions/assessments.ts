@@ -13,7 +13,7 @@ import {
   assessmentAnswers,
   courses,
 } from "@/db/schema";
-import { requireRole, requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { canAccessAssessment } from "@/lib/access";
 import { notifyEnrolledStudents } from "@/lib/notifications";
 
@@ -97,7 +97,7 @@ export async function setAssessmentStatusAction(assessmentId: string, status: "D
       rows[0].kind === "EXAM" ? "NEW_EXAM" : "NEW_QUIZ",
       rows[0].kind === "EXAM" ? "امتحان جديد متاح" : "اختبار جديد متاح",
       rows[0].title,
-      `/dashboard/student/assessments/${assessmentId}`
+      `/dashboard/student`
     );
   }
   revalidatePath(`/dashboard/teacher/assessments/${assessmentId}`);
@@ -171,7 +171,7 @@ export async function deleteQuestionAction(questionId: string) {
 
 // ---------------- Student attempts ----------------
 export async function startAttemptAction(assessmentId: string) {
-  const student = await requireUser();
+  const student = await requireRole("STUDENT");
   const access = await canAccessAssessment(student.id, assessmentId);
   if (!access.allowed) throw new Error(access.reason);
 
@@ -189,12 +189,32 @@ export async function startAttemptAction(assessmentId: string) {
 }
 
 export async function submitAttemptAction(attemptId: string, formData: FormData) {
-  const student = await requireUser();
+  const student = await requireRole("STUDENT");
   const attemptRows = await db.select().from(assessmentAttempts).where(eq(assessmentAttempts.id, attemptId)).limit(1);
   if (!attemptRows.length) throw new Error("المحاولة غير موجودة");
   const attempt = attemptRows[0];
   if (attempt.studentId !== student.id) throw new Error("غير مصرح");
   if (attempt.submittedAt) redirect(`/dashboard/student/assessments/${attempt.assessmentId}?attempt=${attemptId}`);
+
+  const assessmentRow = await db.select().from(assessments).where(eq(assessments.id, attempt.assessmentId)).limit(1);
+  if (!assessmentRow.length) throw new Error("الاختبار غير موجود");
+  const assessment = assessmentRow[0];
+  if (assessment.status !== "PUBLISHED") throw new Error("هذا الاختبار غير متاح حاليًا");
+
+  // Server-side enforcement of max attempts (re-checked at submit, not just at start).
+  const allAttempts = await db
+    .select({ id: assessmentAttempts.id })
+    .from(assessmentAttempts)
+    .where(and(eq(assessmentAttempts.assessmentId, attempt.assessmentId), eq(assessmentAttempts.studentId, student.id)));
+  if (assessment.maxAttempts > 0 && allAttempts.length > assessment.maxAttempts) {
+    throw new Error("لقد استنفذت عدد المحاولات المسموح بها");
+  }
+
+  // Server-side enforcement of the timer (60s grace for network latency).
+  if (assessment.timeLimitMinutes > 0) {
+    const deadline = attempt.startedAt.getTime() + (assessment.timeLimitMinutes * 60 + 60) * 1000;
+    if (Date.now() > deadline) throw new Error("انتهى وقت الامتحان. هذه المحاولة ملغية");
+  }
 
   const questions = await db
     .select({ question: assessmentQuestions, option: assessmentOptions })
@@ -226,8 +246,7 @@ export async function submitAttemptAction(attemptId: string, formData: FormData)
   if (answerRows.length) await db.insert(assessmentAnswers).values(answerRows);
 
   const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-  const assessmentRow = await db.select().from(assessments).where(eq(assessments.id, attempt.assessmentId)).limit(1);
-  const passed = percentage >= (assessmentRow[0]?.passingPercentage ?? 50);
+  const passed = percentage >= assessment.passingPercentage;
 
   await db
     .update(assessmentAttempts)

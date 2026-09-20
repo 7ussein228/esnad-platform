@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { VerifyForm } from "./verify-form";
 
-export const metadata: Metadata = { title: "تحقق من رقم الموبايل" };
+export const metadata: Metadata = { title: "تحقق من رقم الموبايل", robots: { index: false, follow: false } };
 
 export default function RegisterVerifyPage() {
   return (

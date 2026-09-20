@@ -85,7 +85,13 @@ export async function uploadBuffer(
     return { provider: "s3", storageKey, url };
   }
 
-  // Local-disk fallback (development / sandbox demo only).
+  // Local-disk fallback is strictly for local development.
+  // Production (Vercel) has an ephemeral read-only filesystem — uploads
+  // REQUIRE S3-compatible storage configured, otherwise we fail loudly
+  // instead of silently "succeeding" into a black hole.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Storage is not configured. Set S3_BUCKET/S3_REGION/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY.");
+  }
   const uploadsRoot = path.join(process.cwd(), "public", "uploads");
   const destPath = path.join(uploadsRoot, storageKey);
   await mkdir(path.dirname(destPath), { recursive: true });

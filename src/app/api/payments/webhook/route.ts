@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMockProvider } from "@/lib/payments";
+import { getMockProvider, isMockSimulationAllowed } from "@/lib/payments";
 import { confirmPayment } from "@/lib/payments-core";
 
 // Server-to-server webhook endpoint. A real payment provider (Paymob,
@@ -8,6 +8,11 @@ import { confirmPayment } from "@/lib/payments-core";
 // verified here before anything is written to the database, and the
 // transaction is idempotent via a unique idempotencyKey.
 export async function POST(req: NextRequest) {
+  // Mock callbacks are only accepted where simulation is allowed (dev/staging).
+  if (!isMockSimulationAllowed()) {
+    return NextResponse.json({ error: "PROVIDER_NOT_CONFIGURED" }, { status: 503 });
+  }
+
   const rawBody = await req.text();
   const signature = req.headers.get("x-signature");
 
@@ -30,7 +35,8 @@ export async function POST(req: NextRequest) {
   try {
     const result = await confirmPayment(payload.orderId, payload.paymentId, payload.providerReference);
     return NextResponse.json({ received: true, ...result });
-  } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+  } catch {
+    // Never leak internal/DB error details.
+    return NextResponse.json({ error: "WEBHOOK_PROCESSING_FAILED" }, { status: 400 });
   }
 }

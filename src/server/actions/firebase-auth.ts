@@ -6,6 +6,7 @@ import { eq, or } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { createSession, hashPassword } from "@/lib/auth";
+import { checkRateLimit, clientIp, LOGIN_LIMIT, OTP_SEND_LIMIT, REGISTER_LIMIT } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/notifications";
 import { verifyFirebaseIdToken } from "@/lib/firebase-admin";
 
@@ -37,6 +38,9 @@ export async function firebaseLoginAction(_prev: ActionState, formData: FormData
   if (!parsed.success) return { error: "بيانات الدخول غير مكتملة" };
 
   const { idToken, email, phone, name, firebaseUid, provider } = parsed.data;
+
+  const loginRl = checkRateLimit(`social-login:${await clientIp()}`, LOGIN_LIMIT.limit, LOGIN_LIMIT.windowMs);
+  if (!loginRl.allowed) return { error: "محاولات كتيرة. حاول تاني بعد شوية" };
 
   // 1) Try secure verification
   let verifiedEmail = email ?? null;
@@ -136,6 +140,11 @@ export async function registerWithOtpAction(_prev: ActionState, formData: FormDa
   }
 
   const { name, gradeId, email, phone, password, idToken, firebaseUid } = parsed.data;
+
+  const regRl = checkRateLimit(`otp-register:${await clientIp()}`, REGISTER_LIMIT.limit, REGISTER_LIMIT.windowMs);
+  if (!regRl.allowed) return { error: "محاولات كتيرة. حاول تاني بعد شوية" };
+  const phoneRl = checkRateLimit(`otp-phone:${phone}`, OTP_SEND_LIMIT.limit, OTP_SEND_LIMIT.windowMs);
+  if (!phoneRl.allowed) return { error: "الرقم ده اتسجل بيه كتير. حاول تاني بعد شوية" };
 
   // Grade must exist and be active
   const { grades } = await import("@/db/schema");
