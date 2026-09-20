@@ -127,7 +127,7 @@ export default async function StudentLessonPage({
       )}
 
       {!completed ? (
-        <form action={async () => { await markLessonCompleteAction(lessonId); }} className="mt-6">
+        <form action={async () => { "use server"; await markLessonCompleteAction(lessonId); }} className="mt-6">
           <Button type="submit" size="lg">تحديد الدرس كمكتمل والانتقال للتالي</Button>
         </form>
       ) : (
