@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@theme {
+  /* ---- Color system: "Nile & Papyrus" identity ---- */
+  --color-primary-50: #eaf5f3;
+  --color-primary-100: #cde8e3;
+  --color-primary-200: #9bd0c6;
+  --color-primary-300: #66b5a7;
+  --color-primary-400: #3c9787;
+  --color-primary-500: #157A6C;
+  --color-primary-600: #0f6255;
+  --color-primary-700: #0c4f45;
+  --color-primary-800: #0a3e37;
+  --color-primary-900: #082e29;
+
+  --color-gold-50: #fbf5e6;
+  --color-gold-100: #f3e3b8;
+  --color-gold-200: #e8cd87;
+  --color-gold-300: #dcb45c;
+  --color-gold-400: #cc9c3c;
+  --color-gold-500: #b6832a;
+  --color-gold-600: #93691f;
+  --color-gold-700: #6f4f18;
+
+  --color-terracotta-400: #c1673f;
+  --color-terracotta-500: #a84f2c;
+  --color-terracotta-600: #8a3e21;
+
+  --color-ink-900: #201c14;
+  --color-ink-800: #2c261b;
+  --color-ink-700: #453b29;
+  --color-ink-600: #5f5340;
+  --color-ink-500: #7a6c56;
+  --color-ink-400: #9c8f78;
+
+  --color-papyrus-50: #fdfbf5;
+  --color-papyrus-100: #faf5e7;
+  --color-papyrus-200: #f4ecd4;
+  --color-papyrus-300: #ece0bd;
+
+  --color-success: #2f8f5b;
+  --color-warning: #c98a1f;
+  --color-error: #b3402b;
+
+  --font-display: "Amiri", "Cairo", serif;
+  --font-sans: "Cairo", "Tajawal", system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-papyrus-50);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+}
+
+/* Subtle Egyptian geometric motif used as a background texture, never a literal pyramid/hieroglyph */
+.pattern-motif {
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(21, 122, 108, 0.08) 0, transparent 45%),
+    radial-gradient(circle at 88% 82%, rgba(182, 131, 42, 0.10) 0, transparent 42%),
+    repeating-linear-gradient(45deg, rgba(32, 28, 20, 0.025) 0, rgba(32, 28, 20, 0.025) 2px, transparent 2px, transparent 18px);
+}
+
+.papyrus-surface {
+  background-color: var(--color-papyrus-50);
+  background-image:
+    linear-gradient(rgba(236, 224, 189, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(236, 224, 189, 0.35) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.timeline-rail {
+  background: linear-gradient(180deg, var(--color-gold-400), var(--color-primary-500));
+}
+
+::selection {
+  background: var(--color-gold-300);
+  color: var(--color-ink-900);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary-200);
+  border-radius: 999px;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
+}
