@@ -24,7 +24,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
   if (order.studentId !== student.id) notFound();
 
   if (order.status === "PAID") {
-    redirect(`/dashboard/student`);
+    redirect(`/dashboard/student/courses/${order.courseId}`);
   }
 
   const paymentRows = await db.select().from(payments).where(eq(payments.orderId, order.id)).limit(1);
@@ -82,7 +82,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
         </div>
 
         <div className="mt-6">
-          <PayButton payload={payload} signature={signature} successRedirect={`/dashboard/student`} />
+          <PayButton payload={payload} signature={signature} successRedirect={`/dashboard/student/courses/${order.courseId}`} />
         </div>
 
         <p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink-400">

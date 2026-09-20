@@ -15,7 +15,7 @@ export async function enrollInCourseAction(courseId: string) {
 
   if (Number(course.price) <= 0) {
     await grantEnrollment(student.id, courseId, "FREE");
-    redirect(`/dashboard/student`);
+    redirect(`/dashboard/student/courses/${courseId}`);
   }
 
   const { order } = await createOrderForCourse(student.id, courseId);

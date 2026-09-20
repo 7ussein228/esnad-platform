@@ -97,7 +97,7 @@ export async function setAssessmentStatusAction(assessmentId: string, status: "D
       rows[0].kind === "EXAM" ? "NEW_EXAM" : "NEW_QUIZ",
       rows[0].kind === "EXAM" ? "امتحان جديد متاح" : "اختبار جديد متاح",
       rows[0].title,
-      `/dashboard/student`
+      `/dashboard/student/assessments/${assessmentId}`
     );
   }
   revalidatePath(`/dashboard/teacher/assessments/${assessmentId}`);

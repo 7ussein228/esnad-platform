@@ -6,7 +6,7 @@ import {
   signInWithPhoneNumber,
   RecaptchaVerifier,
 } from "firebase/auth";
-import { getFirebaseAuth, getGoogleProvider, getAppleProvider, isFirebaseConfigured } from "@/lib/firebase-client";
+import { getFirebaseAuth, getGoogleProvider, isFirebaseConfigured } from "@/lib/firebase-client";
 import { firebaseLoginAction, type ActionState } from "@/server/actions/firebase-auth";
 import { Button, Input, Label, Alert } from "@/components/ui";
 
@@ -35,27 +35,26 @@ export function FirebaseAuthButtons() {
         <p className="font-bold text-ink-700">تسجيل الدخول الاجتماعي غير مفعل بعد</p>
         <p className="mt-1">
           ضيف متغيرات <code dir="ltr">NEXT_PUBLIC_FIREBASE_*</code> في ملف <code dir="ltr">.env.local</code> بعد إنشاء
-          مشروع Firebase عشان تشغل جوجل والموبايل وآبل.
+          مشروع Firebase عشان تشغل جوجل والموبايل.
         </p>
       </div>
     );
   }
 
-  async function handleSocial(kind: "google" | "apple") {
+  async function handleSocial() {
     setSocialError(null);
-    setBusy(kind);
+    setBusy("google");
     try {
       const auth = getFirebaseAuth();
       if (!auth) throw new Error("Firebase غير مهيأ");
-      const provider = kind === "google" ? getGoogleProvider() : getAppleProvider();
-      const cred = await signInWithPopup(auth, provider as never);
+      const cred = await signInWithPopup(auth, getGoogleProvider());
       const idToken = await cred.user.getIdToken();
       setSocialProfile({
         email: cred.user.email ?? undefined,
         phone: cred.user.phoneNumber ?? undefined,
         name: cred.user.displayName ?? "طالب جديد",
         firebaseUid: cred.user.uid,
-        provider: kind,
+        provider: "google",
         idToken,
       });
     } catch (e: unknown) {
@@ -108,24 +107,14 @@ export function FirebaseAuthButtons() {
     <div className="space-y-4">
       {(state?.error || socialError) && <Alert tone="error">{state?.error ?? socialError}</Alert>}
 
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => handleSocial("google")}
-          disabled={busy !== null}
-          className="rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-bold text-ink-700 transition hover:border-primary-400 hover:text-primary-700"
-        >
-          {busy === "google" ? "جارٍ..." : "جوجل G"}
-        </button>
-        <button
-          type="button"
-          onClick={() => handleSocial("apple")}
-          disabled={busy !== null}
-          className="rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-bold text-ink-700 transition hover:border-ink-900"
-        >
-          {busy === "apple" ? "جارٍ..." : "آبل "}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleSocial}
+        disabled={busy !== null}
+        className="w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-bold text-ink-700 transition hover:border-primary-400 hover:text-primary-700"
+      >
+        {busy === "google" ? "جارٍ..." : "الدخول بجوجل G"}
+      </button>
 
       <div className="rounded-2xl border border-ink-200 p-4">
         <Label>الدخول برقم الموبايل (OTP)</Label>

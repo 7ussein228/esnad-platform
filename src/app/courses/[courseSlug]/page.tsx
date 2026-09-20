@@ -181,7 +181,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
                 <p className="rounded-xl bg-papyrus-100 p-3 text-center text-sm text-ink-500">الاشتراك متاح لحسابات الطلاب فقط</p>
               )}
               {user && user.role === "STUDENT" && enrolled && (
-                <Button href={`/dashboard/student`} className="w-full" size="lg">
+                <Button href={`/dashboard/student/courses/${course.id}`} className="w-full" size="lg">
                   متابعة التعلم
                 </Button>
               )}

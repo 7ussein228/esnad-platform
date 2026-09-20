@@ -1,7 +1,7 @@
 "use client";
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
+import { getAuth, type Auth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -35,12 +35,5 @@ export function getGoogleProvider() {
   const p = new GoogleAuthProvider();
   p.addScope("email");
   p.addScope("profile");
-  return p;
-}
-
-export function getAppleProvider() {
-  const p = new OAuthProvider("apple.com");
-  p.addScope("email");
-  p.addScope("name");
   return p;
 }
