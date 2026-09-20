@@ -28,11 +28,6 @@ export default function LoginPage() {
           <div className="mt-8">
             <LoginForm />
           </div>
-          <div className="mt-8 rounded-xl bg-papyrus-100 p-4 text-xs text-ink-500">
-            <p className="font-bold text-ink-700">حساب تجريبي للطالب:</p>
-            <p>طالب: student@esnad.com / password123</p>
-            <p className="mt-1">المستر يدخل بحسابه الثابت (TEACHER_EMAIL).</p>
-          </div>
         </div>
       </div>
     </div>
