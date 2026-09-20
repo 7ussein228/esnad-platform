@@ -75,6 +75,8 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull(),
   passwordHash: text("password_hash").notNull(),
   role: roleEnum("role").notNull().default("STUDENT"),
+  // Student's academic year (grade). Null for teacher/admin or legacy rows.
+  gradeId: uuid("grade_id").references(() => grades.id),
   avatarUrl: text("avatar_url"),
   phone: varchar("phone", { length: 40 }),
   bio: text("bio"),

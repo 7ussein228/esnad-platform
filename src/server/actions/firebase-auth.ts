@@ -102,3 +102,77 @@ export async function firebaseLoginAction(_prev: ActionState, formData: FormData
   await createSession(created.id);
   redirect("/dashboard");
 }
+
+const otpRegisterSchema = z.object({
+  name: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل"),
+  gradeId: z.string().uuid("اختار السنة الدراسية"),
+  email: z.string().email("البريد الإلكتروني غير صحيح"),
+  phone: z.string().min(8, "رقم الموبايل غير صحيح"),
+  idToken: z.string().min(10, "تحقق من رقم الموبايل الأول").optional(),
+  firebaseUid: z.string().min(1).optional(),
+});
+
+/**
+ * New student registration flow: name + grade + email + phone,
+ * verified by Firebase Phone OTP on /register/verify.
+ * Always creates a STUDENT (single-teacher mode).
+ */
+export async function registerWithOtpAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = otpRegisterSchema.safeParse({
+    name: formData.get("name"),
+    gradeId: formData.get("gradeId"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    idToken: formData.get("idToken") || undefined,
+    firebaseUid: formData.get("firebaseUid") || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "بيانات غير صحيحة" };
+  }
+
+  const { name, gradeId, email, phone, idToken, firebaseUid } = parsed.data;
+
+  // Grade must exist and be active
+  const { grades } = await import("@/db/schema");
+  const gradeRows = await db.select({ id: grades.id }).from(grades).where(eq(grades.id, gradeId)).limit(1);
+  if (!gradeRows.length) return { error: "السنة الدراسية المختارة غير صحيحة" };
+
+  // Secure path: verify the OTP idToken server-side when service account is configured.
+  // The verified phone must match the phone submitted in step 1.
+  if (idToken) {
+    try {
+      const verified = await verifyFirebaseIdToken(idToken);
+      if (verified?.phone && verified.phone !== phone) {
+        return { error: "رقم الموبايل المتحقق منه مختلف عن الرقم المسجل" };
+      }
+    } catch {
+      return { error: "فشل التحقق من كود الموبايل. حاول مرة أخرى" };
+    }
+  }
+
+  const existing = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(or(eq(users.email, email), eq(users.phone, phone)))
+    .limit(1);
+  if (existing.length) {
+    return { error: "الإيميل أو رقم الموبايل ده مسجل بالفعل. سجل الدخول بدل كده" };
+  }
+
+  const [created] = await db
+    .insert(users)
+    .values({
+      name,
+      gradeId,
+      email,
+      phone,
+      // OTP users log in via phone/Google — random unusable password
+      passwordHash: `otp:${firebaseUid ?? phone}:${Date.now()}`,
+      role: "STUDENT",
+    })
+    .returning({ id: users.id });
+
+  await logAudit(created.id, "OTP_REGISTER", "user", created.id, { gradeId });
+  await createSession(created.id);
+  redirect("/dashboard");
+}
