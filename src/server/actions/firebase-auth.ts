@@ -80,6 +80,8 @@ export async function firebaseLoginAction(_prev: ActionState, formData: FormData
     }
     await createSession(user.id);
     await logAudit(user.id, "FIREBASE_LOGIN", "user", user.id, { provider: verifiedProvider });
+    // Google/social users may miss grade/phone — send them to complete-profile once.
+    if (!user.gradeId || !user.phone) redirect("/complete-profile");
     redirect("/dashboard");
   }
 
@@ -100,7 +102,8 @@ export async function firebaseLoginAction(_prev: ActionState, formData: FormData
 
   await logAudit(created.id, "FIREBASE_REGISTER", "user", created.id, { provider: verifiedProvider });
   await createSession(created.id);
-  redirect("/dashboard");
+  // New social account: must complete grade/phone before dashboard.
+  redirect("/complete-profile");
 }
 
 const otpRegisterSchema = z.object({
@@ -175,5 +178,73 @@ export async function registerWithOtpAction(_prev: ActionState, formData: FormDa
 
   await logAudit(created.id, "OTP_REGISTER", "user", created.id, { gradeId });
   await createSession(created.id);
+  redirect("/dashboard");
+}
+
+function normalizePhone(phone: string) {
+  let p = phone.trim().replace(/[\s-]/g, "");
+  if (/^01\d{9}$/.test(p)) p = "+2" + p;
+  return p;
+}
+
+export async function isStudentProfileComplete(studentId: string) {
+  const rows = await db
+    .select({ gradeId: users.gradeId, phone: users.phone })
+    .from(users)
+    .where(eq(users.id, studentId))
+    .limit(1);
+  if (!rows.length) return true;
+  return Boolean(rows[0].gradeId && rows[0].phone);
+}
+
+const completeProfileSchema = z.object({
+  gradeId: z.string().uuid("اختار السنة الدراسية"),
+  phone: z.string().min(8, "رقم الموبايل غير صحيح"),
+  // optional: let Google users set a password so email+password login works too
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل").optional(),
+});
+
+/**
+ * /complete-profile: Google/social student fills missing grade + phone (+ optional password).
+ */
+export async function completeProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { getCurrentUser } = await import("@/lib/auth");
+  const user = await getCurrentUser();
+  if (!user) return { error: "يجب تسجيل الدخول" };
+  if (user.role !== "STUDENT") redirect("/dashboard");
+
+  const parsed = completeProfileSchema.safeParse({
+    gradeId: formData.get("gradeId"),
+    phone: formData.get("phone"),
+    password: formData.get("password") || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "بيانات غير صحيحة" };
+  }
+
+  const phone = normalizePhone(parsed.data.phone);
+  if (!/^\+\d{8,15}$/.test(phone)) return { error: "اكتب رقم الموبايل صحيح" };
+
+  const { grades } = await import("@/db/schema");
+  const gradeRows = await db.select({ id: grades.id }).from(grades).where(eq(grades.id, parsed.data.gradeId)).limit(1);
+  if (!gradeRows.length) return { error: "السنة الدراسية المختارة غير صحيحة" };
+
+  // Phone must not belong to another account
+  const clash = await db.select({ id: users.id }).from(users).where(eq(users.phone, phone)).limit(1);
+  if (clash.length && clash[0].id !== user.id) {
+    return { error: "رقم الموبايل ده مسجل في حساب تاني" };
+  }
+
+  await db
+    .update(users)
+    .set({
+      gradeId: parsed.data.gradeId,
+      phone,
+      ...(parsed.data.password ? { passwordHash: await hashPassword(parsed.data.password) } : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, user.id));
+
+  await logAudit(user.id, "PROFILE_COMPLETED", "user", user.id, { gradeId: parsed.data.gradeId });
   redirect("/dashboard");
 }
