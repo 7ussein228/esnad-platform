@@ -130,6 +130,7 @@ export function VerifyForm() {
           <input type="hidden" name="gradeId" value={data.gradeId} />
           <input type="hidden" name="email" value={data.email} />
           <input type="hidden" name="phone" value={data.phone} />
+          <input type="hidden" name="password" value={data.password} />
           <input type="hidden" name="idToken" value={verified.idToken} />
           <input type="hidden" name="firebaseUid" value={verified.firebaseUid} />
           <Button type="submit" className="w-full" size="lg" disabled={pending}>

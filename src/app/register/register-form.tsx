@@ -15,6 +15,7 @@ export type PendingRegistration = {
   gradeName: string;
   email: string;
   phone: string;
+  password: string;
 };
 
 // Step 1 of registration: name + grade + email + phone.
@@ -32,17 +33,19 @@ export function RegisterForm({ grades }: { grades: GradeOption[] }) {
     const name = String(data.get("name") || "").trim();
     const gradeId = String(data.get("gradeId") || "");
     const email = String(data.get("email") || "").trim();
+    const password = String(data.get("password") || "");
     let phone = String(data.get("phone") || "").trim().replace(/[\s-]/g, "");
 
     if (name.length < 3) return setError("اكتب الاسم بالكامل (3 أحرف على الأقل)");
     if (!gradeId) return setError("اختار السنة الدراسية بتاعتك");
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return setError("البريد الإلكتروني غير صحيح");
+    if (password.length < 6) return setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
     // Normalize Egyptian numbers: 01xxxxxxxxx -> +201xxxxxxxxx
     if (/^01\d{9}$/.test(phone)) phone = "+2" + phone;
     if (!/^\+\d{8,15}$/.test(phone)) return setError("اكتب رقم الموبايل صحيح (مثال: 010xxxxxxxx أو +2010xxxxxxxx)");
 
     const gradeName = grades.find((g) => g.id === gradeId)?.name ?? "";
-    const pending: PendingRegistration = { name, gradeId, gradeName, email, phone };
+    const pending: PendingRegistration = { name, gradeId, gradeName, email, phone, password };
     sessionStorage.setItem(PENDING_REGISTRATION_KEY, JSON.stringify(pending));
     router.push("/register/verify");
   }
@@ -71,6 +74,10 @@ export function RegisterForm({ grades }: { grades: GradeOption[] }) {
         <Label>رقم الموبايل</Label>
         <Input type="tel" name="phone" placeholder="010xxxxxxxx" required dir="ltr" />
         <p className="mt-1 text-[11px] text-ink-400">هيتبعت عليه كود تحقق (OTP) في الخطوة الجاية.</p>
+      </div>
+      <div>
+        <Label>كلمة المرور</Label>
+        <Input type="password" name="password" placeholder="6 أحرف على الأقل" required minLength={6} />
       </div>
       <Button type="submit" className="w-full" size="lg">
         التالي: تحقق من الموبايل

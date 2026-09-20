@@ -5,7 +5,7 @@ import { z } from "zod";
 import { eq, or } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { createSession } from "@/lib/auth";
+import { createSession, hashPassword } from "@/lib/auth";
 import { logAudit } from "@/lib/notifications";
 import { verifyFirebaseIdToken } from "@/lib/firebase-admin";
 
@@ -108,6 +108,7 @@ const otpRegisterSchema = z.object({
   gradeId: z.string().uuid("اختار السنة الدراسية"),
   email: z.string().email("البريد الإلكتروني غير صحيح"),
   phone: z.string().min(8, "رقم الموبايل غير صحيح"),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
   idToken: z.string().min(10, "تحقق من رقم الموبايل الأول").optional(),
   firebaseUid: z.string().min(1).optional(),
 });
@@ -123,6 +124,7 @@ export async function registerWithOtpAction(_prev: ActionState, formData: FormDa
     gradeId: formData.get("gradeId"),
     email: formData.get("email"),
     phone: formData.get("phone"),
+    password: formData.get("password"),
     idToken: formData.get("idToken") || undefined,
     firebaseUid: formData.get("firebaseUid") || undefined,
   });
@@ -130,7 +132,7 @@ export async function registerWithOtpAction(_prev: ActionState, formData: FormDa
     return { error: parsed.error.issues[0]?.message ?? "بيانات غير صحيحة" };
   }
 
-  const { name, gradeId, email, phone, idToken, firebaseUid } = parsed.data;
+  const { name, gradeId, email, phone, password, idToken, firebaseUid } = parsed.data;
 
   // Grade must exist and be active
   const { grades } = await import("@/db/schema");
@@ -166,8 +168,7 @@ export async function registerWithOtpAction(_prev: ActionState, formData: FormDa
       gradeId,
       email,
       phone,
-      // OTP users log in via phone/Google — random unusable password
-      passwordHash: `otp:${firebaseUid ?? phone}:${Date.now()}`,
+      passwordHash: await hashPassword(password),
       role: "STUDENT",
     })
     .returning({ id: users.id });
