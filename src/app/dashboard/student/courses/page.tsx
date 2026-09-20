@@ -19,6 +19,7 @@ export default async function StudentCoursesPage() {
       courseId: courses.id,
       slug: courses.slug,
       title: courses.title,
+      thumbnailUrl: courses.thumbnailUrl,
       gradeName: grades.name,
       subjectName: subjects.name,
     })
@@ -42,12 +43,17 @@ export default async function StudentCoursesPage() {
         {withProgress.map((c) => (
           <Card key={c.courseId} className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
+              <div className="flex items-center gap-3">
+                {c.thumbnailUrl ? (
+                  <img src={c.thumbnailUrl} alt={`غلاف ${c.title}`} loading="lazy" className="h-14 w-24 rounded-lg object-cover" />
+                ) : null}
+                <div>
                 <div className="mb-1 flex gap-2">
                   <Badge tone="primary">{c.subjectName}</Badge>
                   <Badge tone="neutral">{c.gradeName}</Badge>
                 </div>
                 <p className="font-bold text-ink-800">{c.title}</p>
+                </div>
               </div>
               <Button href={`/dashboard/student/courses/${c.courseId}`} size="sm">ادخل الكورس</Button>
             </div>

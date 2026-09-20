@@ -6,6 +6,7 @@ import { grades, subjects, courses, users } from "@/db/schema";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Card, Badge, Button, EmptyState, SectionHeading } from "@/components/ui";
+import { CourseCover } from "@/components/course-cover";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,7 @@ export default async function GradeSubjectCoursesPage({
       description: courses.description,
       price: courses.price,
       currency: courses.currency,
+      thumbnailUrl: courses.thumbnailUrl,
       teacherName: users.name,
     })
     .from(courses)
@@ -45,7 +47,9 @@ export default async function GradeSubjectCoursesPage({
         <SectionHeading eyebrow={`${grade.name} · ${subject.name}`} title="الكورسات المتاحة" />
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {courseRows.map((c) => (
-            <Card key={c.id} className="flex flex-col p-6">
+            <Card key={c.id} className="flex flex-col overflow-hidden">
+              <CourseCover thumbnailUrl={c.thumbnailUrl} title={c.title} />
+              <div className="flex flex-1 flex-col p-6">
               <Badge tone="primary" className="w-fit">{subject.name}</Badge>
               <p className="mt-3 font-display text-lg font-bold text-ink-900">{c.title}</p>
               <p className="mt-2 line-clamp-3 flex-1 text-sm text-ink-500">{c.description}</p>
@@ -56,6 +60,7 @@ export default async function GradeSubjectCoursesPage({
                 </span>
               </div>
               <Button href={`/courses/${c.slug}`} className="mt-4 w-full">عرض التفاصيل</Button>
+              </div>
             </Card>
           ))}
           {courseRows.length === 0 && (

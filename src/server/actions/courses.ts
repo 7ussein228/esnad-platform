@@ -118,6 +118,32 @@ export async function deleteCourseAction(courseId: string) {
   redirect("/dashboard/teacher/courses");
 }
 
+const thumbnailSchema = z.object({
+  thumbnailUrl: z.string().min(1, "ارفع صورة الغلاف أولاً").max(2000),
+});
+
+export async function updateCourseThumbnailAction(courseId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  const teacher = await requireRole("TEACHER", "ADMIN");
+  await assertCourseOwnership(courseId, teacher.id, teacher.role);
+
+  const parsed = thumbnailSchema.safeParse({ thumbnailUrl: formData.get("thumbnailUrl") });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "بيانات غير صحيحة" };
+  if (!parsed.data.thumbnailUrl.startsWith("/uploads/") && !parsed.data.thumbnailUrl.startsWith("http")) {
+    return { error: "رابط الصورة غير صالح" };
+  }
+
+  await db
+    .update(courses)
+    .set({ thumbnailUrl: parsed.data.thumbnailUrl, updatedAt: new Date() })
+    .where(eq(courses.id, courseId));
+
+  await logAudit(teacher.id, "UPDATE_THUMBNAIL", "course", courseId, {});
+  revalidatePath(`/dashboard/teacher/courses/${courseId}`);
+  revalidatePath("/explore");
+  revalidatePath("/");
+  return { success: "تم حفظ صورة الغلاف" };
+}
+
 // ---------------- Modules ----------------
 export async function createModuleAction(courseId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const teacher = await requireRole("TEACHER", "ADMIN");

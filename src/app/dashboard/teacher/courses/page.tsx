@@ -23,6 +23,7 @@ export default async function TeacherCoursesPage() {
       price: courses.price,
       currency: courses.currency,
       status: courses.status,
+      thumbnailUrl: courses.thumbnailUrl,
       gradeName: grades.name,
       subjectName: subjects.name,
     })
@@ -96,7 +97,13 @@ export default async function TeacherCoursesPage() {
       <div className="mt-6 grid gap-4">
         {listedCourses.map((c) => (
           <Card key={c.id} className="flex flex-wrap items-center justify-between gap-3 p-5">
-            <div>
+            <div className="flex items-center gap-3">
+              {c.thumbnailUrl ? (
+                <img src={c.thumbnailUrl} alt={`غلاف ${c.title}`} loading="lazy" className="h-14 w-24 rounded-lg object-cover" />
+              ) : (
+                <span className="grid h-14 w-24 place-items-center rounded-lg bg-papyrus-100 text-[11px] font-bold text-ink-400">بدون صورة</span>
+              )}
+              <div>
               <div className="mb-1 flex gap-2">
                 <Badge tone="primary">{c.subjectName}</Badge>
                 <Badge tone="neutral">{c.gradeName}</Badge>
@@ -107,6 +114,7 @@ export default async function TeacherCoursesPage() {
                 {statById.get(c.id)?.modules ?? 0} وحدة · {statById.get(c.id)?.enrollments ?? 0} مشترك ·{" "}
                 {Number(c.price) === 0 ? "مجانًا" : formatCurrency(c.price, c.currency)}
               </p>
+              </div>
             </div>
             <Button href={`/dashboard/teacher/courses/${c.id}`} size="sm">إدارة المحتوى</Button>
           </Card>

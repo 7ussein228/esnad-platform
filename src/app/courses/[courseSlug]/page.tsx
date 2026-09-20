@@ -167,7 +167,10 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
         </div>
 
         <div>
-          <Card className="sticky top-24 p-6">
+          <Card className="sticky top-24 overflow-hidden p-6 pt-0">
+            {course.thumbnailUrl && (
+              <img src={course.thumbnailUrl} alt={`غلاف كورس ${course.title}`} className="-mx-6 mb-4 h-44 w-[calc(100%+3rem)] object-cover" />
+            )}
             <p className="font-display text-3xl font-bold text-primary-700">
               {Number(course.price) === 0 ? "مجانًا" : formatCurrency(course.price, course.currency)}
             </p>

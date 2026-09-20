@@ -18,6 +18,7 @@ import { db } from "@/db";
 import { grades, subjects, courses, users, lessons, enrollments, educationalStages } from "@/db/schema";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { CourseCover } from "@/components/course-cover";
 import { Button, Card, Badge, SectionHeading, StatCard } from "@/components/ui";
 import { formatCurrency } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ export default async function HomePage() {
         description: courses.description,
         price: courses.price,
         currency: courses.currency,
+        thumbnailUrl: courses.thumbnailUrl,
         gradeName: grades.name,
         subjectName: subjects.name,
         teacherName: users.name,
@@ -262,9 +264,7 @@ export default async function HomePage() {
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featuredCourses.map((c) => (
               <Card key={c.id} className="flex flex-col overflow-hidden">
-                <div className="flex h-32 items-center justify-center bg-gradient-to-br from-primary-600 to-primary-800 text-white">
-                  <ScrollText className="h-10 w-10 opacity-80" />
-                </div>
+                <CourseCover thumbnailUrl={c.thumbnailUrl} title={c.title} />
                 <div className="flex flex-1 flex-col p-5">
                   <div className="mb-2 flex gap-2">
                     <Badge tone="primary">{c.subjectName}</Badge>

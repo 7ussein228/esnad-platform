@@ -9,6 +9,8 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { Card, Badge, Button, Input, Label, Select } from "@/components/ui";
 import { ConfirmSubmitButton } from "@/components/client-widgets";
 import { ActionForm } from "@/components/action-form";
+import { CourseCover } from "@/components/course-cover";
+import { GenericUrlUploader } from "@/components/uploaders";
 import { VideoUploader, FileUploader } from "@/components/uploaders";
 import {
   createModuleAction,
@@ -18,6 +20,7 @@ import {
   deleteLessonAction,
   setCourseStatusAction,
   deleteCourseAction,
+  updateCourseThumbnailAction,
 } from "@/server/actions/courses";
 
 export const dynamic = "force-dynamic";
@@ -101,7 +104,19 @@ export default async function TeacherCourseDetailPage({ params }: { params: Prom
         </div>
       </div>
 
-      <Card className="p-6">
+      <Card className="overflow-hidden">
+        <CourseCover thumbnailUrl={course.thumbnailUrl} title={course.title} className="h-44" />
+        <div className="p-6">
+          <p className="font-bold text-ink-800">صورة غلاف الكورس</p>
+          <p className="mt-1 text-xs text-ink-500">ارفع صورة من جهازك (يفضل 1280×720) — هتظهر في كل كروت الموقع.</p>
+          <ActionForm action={updateCourseThumbnailAction.bind(null, course.id)} className="mt-3 flex flex-wrap items-center gap-3">
+            <GenericUrlUploader hiddenInputName="thumbnailUrl" folder="thumbnails" accept="image/*" label="اختيار صورة الغلاف" />
+            <Button type="submit" size="sm">حفظ الصورة</Button>
+          </ActionForm>
+        </div>
+      </Card>
+
+      <Card className="mt-6 p-6">
         <p className="font-bold text-ink-800">وحدة جديدة</p>
         <ActionForm action={createModuleAction.bind(null, course.id)} className="mt-3 flex gap-2">
           <Input name="title" required placeholder="عنوان الوحدة" className="flex-1" />
